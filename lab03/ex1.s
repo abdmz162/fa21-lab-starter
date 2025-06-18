@@ -5,7 +5,7 @@ n: .word 9
 .text
 main:
     add t0, x0, x0
-    addi t1, x0, 1
+    addi t1, x0, 1 
     la t3, n
     lw t3, 0(t3)
 fib:
