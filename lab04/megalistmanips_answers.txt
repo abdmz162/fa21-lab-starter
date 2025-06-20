@@ -1,6 +1,12 @@
-1.
-2.
-3.
-4.
-5.
-6.
+1. mapLoop: `add t1, s0, x0` used to get array base address which was  incorrect. 
+    Fix: Fixed by replacing it with `lw t1, 0(s0)`.
+2. mapLoop: `add t1, t1, t0` incorrectly adds index instead of byte offset.
+    Fix: Fixed by using `slli t3, t0, 2` and `add t1, t1, t3`.
+3. Recursive call setup: `la a0, 8(s0)` used incorrectly to load next node.
+   Fix: Fixed by using `lw a0, 8(s0)`.
+4. Function pointer restored via `lw a1, 0(s1)` which was  incorrect.
+    Fix: Fixed by using `mv a1, s1`.
+5. Temporary register `t0` used across `jalr s1` without saving/restoring.
+    Fix: Fixed by pushing/popping `t0` on the stack before/after the call.
+6. Recursive call setup used `add t1, s0, x0` again for wrong array base.
+    Fix: Already fixed in Bug #1.

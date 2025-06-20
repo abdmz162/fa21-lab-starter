@@ -1,5 +1,5 @@
 .globl map
-
+#finale
 .data
 arrays: .word 5, 6, 7, 8, 9
         .word 1, 2, 3, 4, 7
@@ -46,47 +46,52 @@ main:
     ecall
 
 map:
-    addi sp, sp, -12
+    addi sp, sp, -16
     sw ra, 0(sp)
     sw s1, 4(sp)
     sw s0, 8(sp)
+    sw t0, 12(sp)        # Save t0 because we'll use it across a function call
 
-    beq a0, x0, done    # if we were given a null pointer, we're done.
+    beq a0, x0, done     # if head == NULL, return
 
-    add s0, a0, x0      # save address of this node in s0
-    add s1, a1, x0      # save address of function in s1
-    add t0, x0, x0      # t0 is a counter
+    mv s0, a0            # s0 = current node
+    mv s1, a1            # s1 = function pointer
 
-    # remember that each node is 12 bytes long:
-    # - 4 for the array pointer
-    # - 4 for the size of the array
-    # - 4 more for the pointer to the next node
+    li t0, 0             # t0 = loop counter
 
-    # also keep in mind that we should not make ANY assumption on which registers
-    # are modified by the callees, even when we know the content inside the functions 
-    # we call. this is to enforce the abstraction barrier of calling convention.
 mapLoop:
-    add t1, s0, x0      # load the address of the array of current node into t1
-    lw t2, 4(s0)        # load the size of the node's array into t2
+    lw t1, 0(s0)         # load arr pointer from node into t1
+    lw t2, 4(s0)         # load size of array into t2
 
-    add t1, t1, t0      # offset the array address by the count
-    lw a0, 0(t1)        # load the value at that address into a0
+    slli t3, t0, 2       # byte offset = t0 * 4
+    add t4, t1, t3       # t4 = address of arr[i]
+    lw a0, 0(t4)         # a0 = arr[i]
 
-    jalr s1             # call the function on that value.
+    # Save t0 across function call
+    addi sp, sp, -4
+    sw t0, 0(sp)
 
-    sw a0, 0(t1)        # store the returned value back into the array
-    addi t0, t0, 1      # increment the count
-    bne t0, t2, mapLoop # repeat if we haven't reached the array size yet
+    jalr s1              # a0 = f(a0)
 
-    la a0, 8(s0)        # load the address of the next node into a0
-    lw a1, 0(s1)        # put the address of the function back into a1 to prepare for the recursion
+    lw t0, 0(sp)         # restore t0
+    addi sp, sp, 4
 
-    jal  map            # recurse
+    sw a0, 0(t4)         # arr[i] = f(arr[i])
+    addi t0, t0, 1
+    bne t0, t2, mapLoop
+
+    lw a0, 8(s0)         # a0 = next
+    mv a1, s1            # restore function pointer
+
+    jal map              # recursive call
+
 done:
+    lw t0, 12(sp)        # restore t0
     lw s0, 8(sp)
     lw s1, 4(sp)
     lw ra, 0(sp)
-    addi sp, sp, 12
+    addi sp, sp, 16
+    ret
 
 print_newline:
     li a1, '\n'

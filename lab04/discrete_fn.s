@@ -1,4 +1,4 @@
-.globl f
+.globl f#finale code
 
 .data
 neg3:   .asciiz "f(-3) should be 6, and it is: "
@@ -76,7 +76,12 @@ main:
 # a1 is the address of the "output" array (defined above).
 # Think: why might having a1 be useful?
 f:
-    # YOUR CODE GOES HERE!
+    addi t0, a0, 3         # shift input from [-3,3] to [0,6]
+    slli t0, t0, 2         # multiply index by 4 (word size)
+    add t1, a1, t0         # address = base + offset
+    lw a0, 0(t1)           # load word from array
+    jr ra                  # return
+
 
     jr ra               # Always remember to jr ra after your function!
 

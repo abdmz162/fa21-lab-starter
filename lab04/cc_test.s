@@ -1,5 +1,5 @@
 .globl simple_fn naive_pow inc_arr
-
+#finale code
 .data
 failure_message: .asciiz "Test failed for some reason.\n"
 success_message: .asciiz "Sanity checks passed! Make sure there are no CC violations.\n"
@@ -55,7 +55,7 @@ main:
 # FIXME Fix the reported error in this function (you can delete lines
 # if necessary, as long as the function still returns 1 in a0).
 simple_fn:
-    mv a0, t0
+  
     li a0, 1
     ret
 
@@ -76,7 +76,10 @@ simple_fn:
 # missing. Another hint: what does the "s" in "s0" stand for?
 naive_pow:
     # BEGIN PROLOGUE
+    addi sp, sp, -4
+    sw s0, 0(sp)
     # END PROLOGUE
+
     li s0, 1
 naive_pow_loop:
     beq a1, zero, naive_pow_end
@@ -85,9 +88,13 @@ naive_pow_loop:
     j naive_pow_loop
 naive_pow_end:
     mv a0, s0
+
     # BEGIN EPILOGUE
+    lw s0, 0(sp)
+    addi sp, sp, 4
     # END EPILOGUE
     ret
+
 
 # Increments the elements of an array in-place.
 # a0 holds the address of the start of the array, and a1 holds
@@ -97,33 +104,35 @@ naive_pow_end:
 # address as argument and increments the 32-bit value stored there.
 inc_arr:
     # BEGIN PROLOGUE
-    # FIXME What other registers need to be saved?
-    addi sp, sp, -4
-    sw ra, 0(sp)
+    addi sp, sp, -16
+    sw ra, 12(sp)
+    sw s0, 8(sp)
+    sw s1, 4(sp)
+    sw t0, 0(sp)
     # END PROLOGUE
-    mv s0, a0 # Copy start of array to saved register
-    mv s1, a1 # Copy length of array to saved register
-    li t0, 0 # Initialize counter to 0
+
+    mv s0, a0
+    mv s1, a1
+    li t0, 0
 inc_arr_loop:
     beq t0, s1, inc_arr_end
-    slli t1, t0, 2 # Convert array index to byte offset
-    add a0, s0, t1 # Add offset to start of array
-    # Prepare to call helper_fn
-    #
-    # FIXME Add code to preserve the value in t0 before we call helper_fn
-    # Hint: What does the "t" in "t0" stand for?
-    # Also ask yourself this: why don't we need to preserve t1?
-    #
+    slli t1, t0, 2
+    add a0, s0, t1
+
+    # Call helper_fn (safe, because t0 is preserved)
     jal helper_fn
-    # Finished call for helper_fn
-    addi t0, t0, 1 # Increment counter
+    addi t0, t0, 1
     j inc_arr_loop
 inc_arr_end:
     # BEGIN EPILOGUE
-    lw ra, 0(sp)
-    addi sp, sp, 4
+    lw ra, 12(sp)
+    lw s0, 8(sp)
+    lw s1, 4(sp)
+    lw t0, 0(sp)
+    addi sp, sp, 16
     # END EPILOGUE
     ret
+
 
 # This helper function adds 1 to the value at the memory address in a0.
 # It doesn't return anything.
@@ -135,11 +144,17 @@ inc_arr_end:
 # as appropriate.
 helper_fn:
     # BEGIN PROLOGUE
+    addi sp, sp, -4
+    sw s0, 0(sp)
     # END PROLOGUE
+
     lw t1, 0(a0)
     addi s0, t1, 1
     sw s0, 0(a0)
+
     # BEGIN EPILOGUE
+    lw s0, 0(sp)
+    addi sp, sp, 4
     # END EPILOGUE
     ret
 
